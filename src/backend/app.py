@@ -111,4 +111,4 @@ def view_ec2_instances(current_user):
     return jsonify(instances), 200
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8080)
+    app.run(debug=True, port=5000)
