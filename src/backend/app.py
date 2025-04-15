@@ -12,6 +12,9 @@ from flask_cors import CORS
 load_dotenv()
 
 app = Flask(__name__)
+# Initialize CORS immediately with the allowed origin (adjust as needed)
+CORS(app, resources={r"/chrono/*": {"origins": "http://localhost:8080"}}, supports_credentials=True)
+
 app.config["MONGO_URI"] = os.getenv("MONGO_URI")
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", os.urandom(32).hex())
 
@@ -20,7 +23,7 @@ mongo = PyMongo(app)
 users_collection = mongo.db["user-info"]
 timeline_collection = mongo.db["active-timelines"]
 file_versions_collection = mongo.db["file-versions"]
-capsules_collection = mongo.db["capsules"]            # For Chrono Capsules (full system state)
+capsules_collection = mongo.db["capsules"]
 eb_snapshots_collection = mongo.db["ebs-snapshots"]
 ec2_instances_collection = mongo.db["ec2-instances"]
 
@@ -40,7 +43,8 @@ def token_required(f):
             token = token.split(" ")[1]  # Bearer <token>
             data = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
             current_user = data["username"]
-        except:
+        except Exception as e:
+            print("Token error:", e)
             return jsonify({"message": "Token is invalid or expired"}), 401
 
         return f(current_user, *args, **kwargs)
@@ -65,8 +69,8 @@ def login():
     username = data.get("username")
     password = data.get("password")
 
-    print("The usernmae is: ", username)
-    print("The password is: ", password)
+    print("The username is:", username)
+    print("The password is:", password)
 
     user = users_collection.find_one({"username": username})
     if not user or not check_password_hash(user["password"], password):
@@ -116,4 +120,3 @@ def view_ec2_instances(current_user):
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
-    CORS(app, resources={r"/chrono/*": {"origins": "http://localhost:8080"}})

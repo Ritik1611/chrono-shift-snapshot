@@ -4,13 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { CheckCircle, Clock, Download, Sparkles } from "lucide-react";
+import { CheckCircle, Clock, Sparkles } from "lucide-react";
 
 interface Capsule {
-  id: number;
-  capsule_name: string;
-  capsule_time: string;
-  updated_at: string;
+  id: string | number;
+  capsule_name?: string;
+  name?: string;
+  capsule_time?: string;
+  created_at?: string;
+  updated_at?: string;
+  description?: string;
 }
 
 interface CapsuleListProps {
@@ -20,7 +23,7 @@ interface CapsuleListProps {
 }
 
 export function CapsuleList({ capsules, selectedTimePoint, onSelectTimePoint }: CapsuleListProps) {
-  const [activeCapule, setActiveCapule] = useState<number | null>(null);
+  const [activeCapule, setActiveCapule] = useState<string | number | null>(null);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -32,19 +35,26 @@ export function CapsuleList({ capsules, selectedTimePoint, onSelectTimePoint }: 
 
   const handleActivate = (capsule: Capsule) => {
     setActiveCapule(capsule.id);
-    onSelectTimePoint(capsule.capsule_time);
+    // Use the appropriate timestamp field based on API response
+    const timestamp = capsule.capsule_time || capsule.created_at || "";
+    onSelectTimePoint(timestamp);
     
     toast({
       title: "Capsule Activated",
-      description: `"${capsule.capsule_name}" is now active`,
+      description: `"${capsule.capsule_name || capsule.name}" is now active`,
     });
   };
 
-  const handleRestore = (capsule: Capsule) => {
-    toast({
-      title: "Starting Restoration",
-      description: `Restoring system state from "${capsule.capsule_name}"`,
-    });
+  const getCapsuleName = (capsule: Capsule) => {
+    return capsule.capsule_name || capsule.name || `Capsule ${capsule.id}`;
+  };
+
+  const getCapsuleTime = (capsule: Capsule) => {
+    return capsule.capsule_time || capsule.created_at || "";
+  };
+
+  const getUpdatedAt = (capsule: Capsule) => {
+    return capsule.updated_at || capsule.created_at || "";
   };
 
   return (
@@ -54,10 +64,6 @@ export function CapsuleList({ capsules, selectedTimePoint, onSelectTimePoint }: 
           <h2 className="text-xl font-semibold time-gradient-text">Chrono Capsules</h2>
           <p className="text-sm text-muted-foreground">Preserved system states across time</p>
         </div>
-        <Button className="gap-2 time-warp">
-          <Clock className="h-4 w-4" />
-          <span>Create New Capsule</span>
-        </Button>
       </div>
 
       <Card className="overflow-hidden border-primary/20 time-shimmer">
@@ -81,7 +87,7 @@ export function CapsuleList({ capsules, selectedTimePoint, onSelectTimePoint }: 
               {capsules.map((capsule) => (
                 <TableRow 
                   key={capsule.id} 
-                  className={selectedTimePoint === capsule.capsule_time ? "bg-primary/5" : ""}>
+                  className={selectedTimePoint === getCapsuleTime(capsule) ? "bg-primary/5" : ""}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       {activeCapule === capsule.id && (
@@ -90,11 +96,11 @@ export function CapsuleList({ capsules, selectedTimePoint, onSelectTimePoint }: 
                           <span className="absolute inset-0 animate-ping rounded-full bg-green-500 opacity-25"></span>
                         </div>
                       )}
-                      {capsule.capsule_name}
+                      {getCapsuleName(capsule)}
                     </div>
                   </TableCell>
-                  <TableCell>{formatDate(capsule.capsule_time)}</TableCell>
-                  <TableCell>{formatDate(capsule.updated_at)}</TableCell>
+                  <TableCell>{formatDate(getCapsuleTime(capsule))}</TableCell>
+                  <TableCell>{formatDate(getUpdatedAt(capsule))}</TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button 
                       variant="outline" 
@@ -104,13 +110,6 @@ export function CapsuleList({ capsules, selectedTimePoint, onSelectTimePoint }: 
                       onClick={() => handleActivate(capsule)}
                     >
                       {activeCapule === capsule.id ? "Active" : "Activate"}
-                    </Button>
-                    <Button 
-                      variant="secondary" 
-                      size="sm" 
-                      onClick={() => handleRestore(capsule)} 
-                      className="time-warp">
-                      <Download className="h-4 w-4 mr-1" /> Restore
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -129,7 +128,7 @@ export function CapsuleList({ capsules, selectedTimePoint, onSelectTimePoint }: 
         </h3>
         <p className="text-sm text-muted-foreground relative z-10">
           Chrono Capsules preserve your entire system state at a specific point in time. 
-          Unlike individual file versioning, capsules allow you to restore your complete 
+          Unlike individual file versioning, capsules allow you to view your complete 
           environment, including all files, configurations, and application states.
         </p>
       </div>

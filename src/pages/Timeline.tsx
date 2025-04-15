@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,170 +9,66 @@ import { CapsuleList } from "@/components/timeline/CapsuleList";
 import { FileVersions } from "@/components/timeline/FileVersions";
 import { toast } from "@/hooks/use-toast";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
-
-// Mock data for timeline events
-const timelineEvents = [
-  { 
-    id: 1, 
-    type: "snapshot", 
-    status: "successful", 
-    timestamp: "2025-04-10T09:30:00", 
-    message: "Instance snapshot created", 
-    details: "EC2-i-87654 • 2.4 GB" 
-  },
-  { 
-    id: 2, 
-    type: "deployment", 
-    status: "successful", 
-    timestamp: "2025-04-09T18:45:00", 
-    message: "Production deployment", 
-    details: "Release v2.4.0" 
-  },
-  { 
-    id: 3, 
-    type: "config", 
-    status: "successful", 
-    timestamp: "2025-04-09T16:20:00", 
-    message: "Configuration updated", 
-    details: "Changed memory allocation" 
-  },
-  { 
-    id: 4, 
-    type: "snapshot", 
-    status: "successful", 
-    timestamp: "2025-04-09T14:15:00", 
-    message: "Instance snapshot created", 
-    details: "EC2-i-87654 • 2.3 GB" 
-  },
-  { 
-    id: 5, 
-    type: "snapshot", 
-    status: "successful", 
-    timestamp: "2025-04-08T11:45:00", 
-    message: "Instance snapshot created", 
-    details: "EC2-i-87654 • 2.3 GB" 
-  },
-  { 
-    id: 6, 
-    type: "deployment", 
-    status: "failed", 
-    timestamp: "2025-04-08T10:30:00", 
-    message: "Deployment failed", 
-    details: "Missing dependencies" 
-  },
-  { 
-    id: 7, 
-    type: "snapshot", 
-    status: "failed", 
-    timestamp: "2025-04-07T16:20:00", 
-    message: "Snapshot creation failed", 
-    details: "Insufficient permissions" 
-  },
-  { 
-    id: 8, 
-    type: "config", 
-    status: "successful", 
-    timestamp: "2025-04-07T13:10:00", 
-    message: "Security group updated", 
-    details: "Added new inbound rule" 
-  },
-  { 
-    id: 9, 
-    type: "snapshot", 
-    status: "successful", 
-    timestamp: "2025-04-06T08:10:00", 
-    message: "Instance snapshot created", 
-    details: "EC2-i-87654 • 2.2 GB" 
-  },
-];
-
-// Mock data for capsules
-const capsules = [
-  {
-    id: 1,
-    capsule_name: "Production v1.0.0",
-    capsule_time: "2025-04-10T09:30:00",
-    updated_at: "2025-04-10T09:35:00"
-  },
-  {
-    id: 2,
-    capsule_name: "Development Branch",
-    capsule_time: "2025-04-09T16:20:00",
-    updated_at: "2025-04-09T16:25:00"
-  },
-  {
-    id: 3,
-    capsule_name: "Feature X Stable",
-    capsule_time: "2025-04-08T11:45:00",
-    updated_at: "2025-04-08T11:50:00"
-  }
-];
-
-// Mock data for file versions
-const fileVersions = [
-  {
-    filename: "server.py",
-    versions: [
-      { 
-        time_mark: "2025-04-10T09:30:00", 
-        version: "v1.2.0",
-        base: false 
-      },
-      { 
-        time_mark: "2025-04-09T16:20:00", 
-        version: "v1.1.0",
-        base: false 
-      },
-      { 
-        time_mark: "2025-04-08T11:45:00",
-
-        version: "v1.0.0",
-        base: true 
-      }
-    ]
-  },
-  {
-    filename: "config.json",
-    versions: [
-      { 
-        time_mark: "2025-04-09T18:45:00", 
-        version: "v2.0.0",
-        base: false 
-      },
-      { 
-        time_mark: "2025-04-08T10:30:00", 
-        version: "v1.0.0",
-        base: true 
-      }
-    ]
-  },
-  {
-    filename: "app.js",
-    versions: [
-      { 
-        time_mark: "2025-04-10T09:30:00", 
-        version: "v3.0.0",
-        base: false 
-      },
-      { 
-        time_mark: "2025-04-09T16:20:00", 
-        version: "v2.0.0",
-        base: false 
-      },
-      { 
-        time_mark: "2025-04-08T11:45:00", 
-        version: "v1.0.0",
-        base: true 
-      }
-    ]
-  }
-];
+import { useQuery } from "@tanstack/react-query";
+import apiService from "@/services/apiService";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Timeline() {
+  // Local state for filter and selected time point
   const [filter, setFilter] = useState("all");
   const [selectedTimePoint, setSelectedTimePoint] = useState("");
   const [activeTab, setActiveTab] = useState("events");
-  
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  // Check authentication—if not logged in, redirect and display a toast
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/');
+      toast({
+        title: "Authentication required",
+        description: "Please log in to view timelines",
+        variant: "destructive"
+      });
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Fetch timeline data from updated API
+  const { data: timelines, isLoading: timelinesLoading } = useQuery({
+    queryKey: ['timelines'],
+    queryFn: apiService.getTimelines,
+    enabled: isAuthenticated
+  });
+
+  // Fetch capsule data
+  const { data: capsules, isLoading: capsulesLoading } = useQuery({
+    queryKey: ['capsules'],
+    queryFn: apiService.getCapsules,
+    enabled: isAuthenticated
+  });
+
+  // Fetch file versions data
+  const { data: fileVersions, isLoading: fileVersionsLoading } = useQuery({
+    queryKey: ['fileVersions'],
+    queryFn: apiService.getFileVersions,
+    enabled: isAuthenticated
+  });
+
+  // Fetch snapshots data
+  const { data: snapshots, isLoading: snapshotsLoading } = useQuery({
+    queryKey: ['snapshots'],
+    queryFn: apiService.getSnapshots,
+    enabled: isAuthenticated
+  });
+
+  // Fetch EC2 instances data
+  const { data: ec2Instances, isLoading: ec2InstancesLoading } = useQuery({
+    queryKey: ['ec2Instances'],
+    queryFn: apiService.getEC2Instances,
+    enabled: isAuthenticated
+  });
+
   // Format date in a time-focused way
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -185,7 +80,7 @@ export default function Timeline() {
       minute: '2-digit' 
     }).format(date);
   };
-  
+
   // Get icon based on event type
   const getEventIcon = (type: string) => {
     switch (type) {
@@ -200,6 +95,60 @@ export default function Timeline() {
     }
   };
 
+  // Transform the API data into a unified events array
+  const constructTimelineEvents = () => {
+    let events: any[] = [];
+    
+    // Add snapshots
+    if (snapshots) {
+      snapshots.forEach((snapshot: any, index: number) => {
+        events.push({
+          id: `snapshot-${index}`,
+          type: "snapshot",
+          status: snapshot.status || "successful",
+          timestamp: snapshot.timestamp || snapshot.created_at,
+          message: snapshot.description || "Instance snapshot created",
+          details: snapshot.snapshot_id || `Snapshot ${index + 1}`
+        });
+      });
+    }
+    
+    // Add EC2 instance events
+    if (ec2Instances) {
+      ec2Instances.forEach((instance: any, index: number) => {
+        events.push({
+          id: `ec2-${index}`,
+          type: "deployment",
+          status: instance.state === "running" ? "successful" : "failed",
+          timestamp: instance.launch_time || instance.created_at,
+          message: `EC2 instance ${instance.state || "updated"}`,
+          details: instance.instance_id || `Instance ${index + 1}`
+        });
+      });
+    }
+    
+    // Add timeline entries
+    if (timelines) {
+      timelines.forEach((timeline: any, index: number) => {
+        events.push({
+          id: `timeline-${index}`,
+          type: timeline.type || "config",
+          status: timeline.status || "successful",
+          timestamp: timeline.timestamp || timeline.created_at,
+          message: timeline.description || `Timeline event ${index + 1}`,
+          details: timeline.details || ""
+        });
+      });
+    }
+    
+    // Sort by timestamp, newest first
+    return events.sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  };
+
+  const timelineEvents = constructTimelineEvents();
+
   const handleTimePointSelect = (timePoint: string) => {
     setSelectedTimePoint(timePoint);
     toast({
@@ -207,18 +156,35 @@ export default function Timeline() {
       description: `You've selected time point: ${formatDate(timePoint)}`,
     });
   };
-  
-  // Filter events based on selected tab
+
+  // Filter events based on selected type filter
   const filteredEvents = filter === "all" 
     ? timelineEvents 
     : timelineEvents.filter(event => event.type === filter);
-  
+
   useEffect(() => {
-    // Set the first event's timestamp as default selected time point
+    // Set the first event's timestamp as default selected time point (if not already set)
     if (timelineEvents.length > 0 && !selectedTimePoint) {
       setSelectedTimePoint(timelineEvents[0].timestamp);
     }
-  }, []);
+  }, [timelineEvents, selectedTimePoint]);
+
+  // Check if any data is still loading
+  const isLoading = timelinesLoading || capsulesLoading || fileVersionsLoading || 
+                    snapshotsLoading || ec2InstancesLoading;
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-[80vh]">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-primary border-r-2"></div>
+            <p className="mt-4 text-muted-foreground">Loading timeline data...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -253,29 +219,17 @@ export default function Timeline() {
                   <div className="space-y-6">
                     <div>
                       <h3 className="text-xl font-semibold time-gradient-text">Chrono Control Panel</h3>
-                      <p className="text-sm text-muted-foreground">Manage your time travel operations</p>
+                      <p className="text-sm text-muted-foreground">View your time travel operations</p>
                     </div>
                     <div className="space-y-4">
                       <div className="time-shimmer">
-                        <h4 className="text-sm font-medium mb-2">Create Time Capsule</h4>
-                        <div className="space-y-2">
-                          <input 
-                            type="text" 
-                            placeholder="Capsule Name"
-                            className="w-full px-3 py-2 border border-input bg-background rounded-md" 
-                          />
-                          <Button className="w-full time-warp">Create Capsule at Current Time Point</Button>
-                        </div>
-                      </div>
-                      
-                      <div className="time-shimmer">
-                        <h4 className="text-sm font-medium mb-2">Jump to Time Point</h4>
+                        <h4 className="text-sm font-medium mb-2">View Time Points</h4>
                         <div className="space-y-2">
                           <input 
                             type="datetime-local" 
                             className="w-full px-3 py-2 border border-input bg-background rounded-md" 
                           />
-                          <Button variant="secondary" className="w-full time-warp">Time Jump</Button>
+                          <Button variant="secondary" className="w-full time-warp">View Time Point</Button>
                         </div>
                       </div>
                     </div>
@@ -287,11 +241,17 @@ export default function Timeline() {
         </div>
         
         {/* Time Axis Visualization */}
-        <TimeAxis 
-          events={timelineEvents}
-          selectedTimePoint={selectedTimePoint}
-          onSelectTimePoint={handleTimePointSelect}
-        />
+        {timelineEvents.length > 0 ? (
+          <TimeAxis 
+            events={timelineEvents}
+            selectedTimePoint={selectedTimePoint}
+            onSelectTimePoint={handleTimePointSelect}
+          />
+        ) : (
+          <Card className="p-8 text-center">
+            <p className="text-muted-foreground">No timeline events available.</p>
+          </Card>
+        )}
         
         {/* Main Content Tabs */}
         <Tabs defaultValue="events" value={activeTab} onValueChange={setActiveTab}>
@@ -316,73 +276,80 @@ export default function Timeline() {
             
             <div className="timeline-connector -z-10"></div>
             
-            <div className="space-y-8">
-              {filteredEvents.map((event) => (
-                <div key={event.id} className="relative pl-10 animate-fade-in" style={{ animationDelay: `${event.id * 100}ms` }}>
-                  <div className="timeline-dot">
-                    {selectedTimePoint === event.timestamp && (
-                      <span className="absolute inset-0 animate-ping rounded-full bg-primary opacity-75"></span>
-                    )}
-                  </div>
-                  
-                  <Card 
-                    className={`border-l-4 ${
-                      event.status === "successful" ? "border-l-green-500" : "border-l-red-500"
-                    } hover:shadow-md transition-all ${selectedTimePoint === event.timestamp ? 'ring-2 ring-primary time-shimmer' : ''}`}
-                    onClick={() => handleTimePointSelect(event.timestamp)}>
-                    <CardHeader className="py-3 px-4">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-medium flex items-center gap-2">
-                          <span className="p-1 rounded-md bg-muted inline-flex">
-                            {getEventIcon(event.type)}
+            {filteredEvents.length > 0 ? (
+              <div className="space-y-8">
+                {filteredEvents.map((event, idx) => (
+                  <div key={event.id} className="relative pl-10 animate-fade-in" style={{ animationDelay: `${idx * 100}ms` }}>
+                    <div className="timeline-dot">
+                      {selectedTimePoint === event.timestamp && (
+                        <span className="absolute inset-0 animate-ping rounded-full bg-primary opacity-75"></span>
+                      )}
+                    </div>
+                    
+                    <Card 
+                      className={`border-l-4 ${event.status === "successful" ? "border-l-green-500" : "border-l-red-500"} hover:shadow-md transition-all ${selectedTimePoint === event.timestamp ? 'ring-2 ring-primary time-shimmer' : ''}`}
+                      onClick={() => handleTimePointSelect(event.timestamp)}
+                    >
+                      <CardHeader className="py-3 px-4">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <span className="p-1 rounded-md bg-muted inline-flex">
+                              {getEventIcon(event.type)}
+                            </span>
+                            {event.message}
+                            {event.status === "successful" ? (
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <XCircle className="h-4 w-4 text-red-500" />
+                            )}
+                          </CardTitle>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(event.timestamp)}
                           </span>
-                          {event.message}
-                          {event.status === "successful" ? (
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <XCircle className="h-4 w-4 text-red-500" />
-                          )}
-                        </CardTitle>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(event.timestamp)}
-                        </span>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="py-2 px-4">
-                      <p className="text-sm text-muted-foreground">{event.details}</p>
-                    </CardContent>
-                  </Card>
-                </div>
-              ))}
-            </div>
-            
-            {filteredEvents.length === 0 && (
+                        </div>
+                      </CardHeader>
+                      <CardContent className="py-2 px-4">
+                        <p className="text-sm text-muted-foreground">{event.details}</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ))}
+              </div>
+            ) : (
               <div className="text-center py-10">
                 <p className="text-muted-foreground">No {filter} events found</p>
               </div>
             )}
-            
-            <div className="mt-6 text-center">
-              <Button variant="outline" className="time-shimmer">Load More</Button>
-            </div>
           </TabsContent>
           
           {/* Capsules Tab */}
           <TabsContent value="capsules" className="mt-6">
-            <CapsuleList 
-              capsules={capsules}
-              selectedTimePoint={selectedTimePoint}
-              onSelectTimePoint={handleTimePointSelect}
-            />
+            {capsules && capsules.length > 0 ? (
+              <CapsuleList 
+                capsules={capsules}
+                selectedTimePoint={selectedTimePoint}
+                onSelectTimePoint={handleTimePointSelect}
+              />
+            ) : (
+              <Card className="p-8 text-center">
+                <p className="text-muted-foreground">No capsules available.</p>
+              </Card>
+            )}
           </TabsContent>
           
           {/* Files Tab */}
           <TabsContent value="files" className="mt-6">
-            <FileVersions 
-              files={fileVersions}
-              selectedTimePoint={selectedTimePoint}
-              onSelectTimePoint={handleTimePointSelect}
-            />
+            {fileVersions && fileVersions.length > 0 ? (
+              <FileVersions 
+                files={fileVersions}
+                selectedTimePoint={selectedTimePoint}
+                onSelectTimePoint={handleTimePointSelect}
+              />
+            ) : (
+              <Card className="p-8 text-center">
+                <p className="text-muted-foreground">No file versions available.</p>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

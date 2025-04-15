@@ -1,6 +1,5 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { apiService } from '@/services/apiService';
+import apiService from '@/services/apiService';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -21,15 +20,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is logged in (using token from session storage)
-    const token = sessionStorage.getItem('token');
-    const storedUsername = sessionStorage.getItem('currentUser');
-    
+    // Check if user is logged in (using token from localStorage)
+    const token = localStorage.getItem('token');
+    const storedUsername = localStorage.getItem('currentUser');
     if (token && storedUsername) {
       setIsAuthenticated(true);
       setUsername(storedUsername);
     }
-    
     setIsLoading(false);
   }, []);
 
@@ -37,24 +34,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const result = await apiService.login(username, password);
-      
-      if (result.success) {
+      // Check if token exists in result
+      if (result.token) {
         setIsAuthenticated(true);
         setUsername(username);
+        localStorage.setItem('currentUser', username);
         toast({
           title: "Login successful",
           description: `Welcome back, ${username}!`,
         });
+        setIsLoading(false);
+        return { success: true };
       } else {
         toast({
           title: "Login failed",
           description: result.message || "Invalid username or password",
           variant: "destructive"
         });
+        setIsLoading(false);
+        return { success: false, message: result.message || "Invalid username or password" };
       }
-      
-      setIsLoading(false);
-      return result;
     } catch (error) {
       setIsLoading(false);
       toast({
@@ -70,18 +69,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const result = await apiService.signup(username, password);
-      
-      if (result.success) {
+      if (result.message === "User created successfully") {
         toast({
           title: "Signup successful",
           description: "Your account has been created. You can now log in.",
         });
-        
-        // Auto login after signup
+        // Auto-login after signup
         const loginResult = await apiService.login(username, password);
-        if (loginResult.success) {
+        if (loginResult.token) {
           setIsAuthenticated(true);
           setUsername(username);
+          localStorage.setItem('currentUser', username);
+          setIsLoading(false);
+          return { success: true, message: "Signup and login successful" };
+        } else {
+          setIsLoading(false);
+          return { success: false, message: "Auto login failed after signup" };
         }
       } else {
         toast({
@@ -89,10 +92,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           description: result.message,
           variant: "destructive"
         });
+        setIsLoading(false);
+        return { success: false, message: result.message };
       }
-      
-      setIsLoading(false);
-      return result;
     } catch (error) {
       setIsLoading(false);
       toast({
@@ -108,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     apiService.logout();
     setIsAuthenticated(false);
     setUsername(null);
+    localStorage.removeItem('currentUser');
     toast({
       title: "Logged out",
       description: "You have been logged out successfully",

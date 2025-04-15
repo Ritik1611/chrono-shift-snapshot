@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface TimeEvent {
-  id: number;
+  id: string | number;
   timestamp: string;
   type: string;
   status: string;
