@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 from functools import wraps
 from bson import ObjectId
+from flask_cors import CORS
 
 load_dotenv()
 
@@ -64,6 +65,9 @@ def login():
     username = data.get("username")
     password = data.get("password")
 
+    print("The usernmae is: ", username)
+    print("The password is: ", password)
+
     user = users_collection.find_one({"username": username})
     if not user or not check_password_hash(user["password"], password):
         return jsonify({"message": "Invalid username or password"}), 401
@@ -111,4 +115,5 @@ def view_ec2_instances(current_user):
     return jsonify(instances), 200
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)
+    CORS(app, resources={r"/chrono/*": {"origins": "http://localhost:8080"}})
