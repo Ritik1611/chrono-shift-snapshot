@@ -10,6 +10,7 @@ import {
   Settings, 
   User
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -17,18 +18,17 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const navigate = useNavigate();
+  const { isAuthenticated, logout } = useAuth();
   
   useEffect(() => {
     // Check if user is logged in
-    const currentUser = sessionStorage.getItem("currentUser");
-    if (!currentUser) {
+    if (!isAuthenticated) {
       navigate("/");
     }
-  }, [navigate]);
+  }, [isAuthenticated, navigate]);
   
   const handleLogout = () => {
-    // Clear user session
-    sessionStorage.removeItem("currentUser");
+    logout();
     navigate("/");
   };
   
