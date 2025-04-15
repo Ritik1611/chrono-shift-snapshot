@@ -3,9 +3,19 @@ import AuthForm from "@/components/auth/AuthForm";
 import { Clock, Hourglass, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  
+  useEffect(() => {
+    // If the user is already authenticated, redirect to dashboard
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
   
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
