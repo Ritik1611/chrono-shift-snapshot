@@ -1,6 +1,7 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import apiService from '@/services/apiService';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -17,7 +18,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [username, setUsername] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const { toast } = useToast();
 
   useEffect(() => {
     // Check if user is logged in (using token from localStorage)
@@ -39,27 +39,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsAuthenticated(true);
         setUsername(username);
         localStorage.setItem('currentUser', username);
-        toast({
-          title: "Login successful",
-          description: `Welcome back, ${username}!`,
+        toast.success(`Welcome back, ${username}!`, {
+          description: "Login successful",
         });
         setIsLoading(false);
         return { success: true };
       } else {
-        toast({
-          title: "Login failed",
+        toast.error("Login failed", {
           description: result.message || "Invalid username or password",
-          variant: "destructive"
         });
         setIsLoading(false);
         return { success: false, message: result.message || "Invalid username or password" };
       }
     } catch (error) {
       setIsLoading(false);
-      toast({
-        title: "Login error",
+      toast.error("Login error", {
         description: "An unexpected error occurred",
-        variant: "destructive"
       });
       return { success: false, message: "An unexpected error occurred" };
     }
@@ -70,8 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const result = await apiService.signup(username, password);
       if (result.message === "User created successfully") {
-        toast({
-          title: "Signup successful",
+        toast.success("Signup successful", {
           description: "Your account has been created. You can now log in.",
         });
         // Auto-login after signup
@@ -87,20 +81,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { success: false, message: "Auto login failed after signup" };
         }
       } else {
-        toast({
-          title: "Signup failed",
+        toast.error("Signup failed", {
           description: result.message,
-          variant: "destructive"
         });
         setIsLoading(false);
         return { success: false, message: result.message };
       }
     } catch (error) {
       setIsLoading(false);
-      toast({
-        title: "Signup error",
+      toast.error("Signup error", {
         description: "An unexpected error occurred",
-        variant: "destructive"
       });
       return { success: false, message: "An unexpected error occurred" };
     }
@@ -111,8 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsAuthenticated(false);
     setUsername(null);
     localStorage.removeItem('currentUser');
-    toast({
-      title: "Logged out",
+    toast.success("Logged out", {
       description: "You have been logged out successfully",
     });
   };

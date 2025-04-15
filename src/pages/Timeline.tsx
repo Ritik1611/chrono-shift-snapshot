@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,7 +35,7 @@ export default function Timeline() {
     }
   }, [isAuthenticated, navigate]);
 
-  // Fetch timeline data from updated API
+  // Fetch timeline data from API
   const { data: timelines, isLoading: timelinesLoading } = useQuery({
     queryKey: ['timelines'],
     queryFn: apiService.getTimelines,

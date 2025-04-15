@@ -1,91 +1,30 @@
 
-import { useState, useEffect } from 'react';
-import { mongoService } from '../services/mongoService';
+import { useState } from 'react';
+import apiService from '@/services/apiService';
+import { toast } from "sonner";
 
 export function useMongoUser() {
   const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Get current user from session storage
-        const username = sessionStorage.getItem("currentUser");
-        
-        if (!username) {
-          setError('User not logged in');
-          return;
-        }
-        
-        const userData = await mongoService.getUserByUsername(username);
-        
-        if (userData) {
-          setUser(userData);
-          setError(null);
-        } else {
-          setError('User not found');
-        }
-      } catch (err) {
-        setError('Failed to fetch user data');
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
-
+  // This hook is kept for backward compatibility but functionality is removed
+  // as we now use apiService directly
+  
   const updateUserProfile = async (userData: any) => {
-    try {
-      setIsLoading(true);
-      const username = sessionStorage.getItem("currentUser");
-      
-      if (!username) {
-        return { success: false, message: 'User not logged in' };
-      }
-      
-      const updatedUser = await mongoService.updateUser(username, userData);
-      
-      if (updatedUser) {
-        setUser(updatedUser);
-        return { success: true, message: 'Profile updated successfully' };
-      } else {
-        setError('Failed to update user');
-        return { success: false, message: 'User not found' };
-      }
-    } catch (err) {
-      setError('Error updating profile');
-      return { success: false, message: 'Error updating profile' };
-    } finally {
-      setIsLoading(false);
-    }
+    setError('Profile update feature is not available');
+    toast.error("Feature unavailable", {
+      description: "Profile update feature is not available"
+    });
+    return { success: false, message: 'This feature is not available' };
   };
 
   const updateUserPassword = async (currentPassword: string, newPassword: string) => {
-    try {
-      setIsLoading(true);
-      const username = sessionStorage.getItem("currentUser");
-      
-      if (!username) {
-        return { success: false, message: 'User not logged in' };
-      }
-      
-      const success = await mongoService.updatePassword(username, currentPassword, newPassword);
-      
-      if (success) {
-        return { success: true, message: 'Password updated successfully' };
-      } else {
-        return { success: false, message: 'Failed to update password' };
-      }
-    } catch (err) {
-      return { success: false, message: 'Error updating password' };
-    } finally {
-      setIsLoading(false);
-    }
+    setError('Password update feature is not available');
+    toast.error("Feature unavailable", {
+      description: "Password update feature is not available"
+    });
+    return { success: false, message: 'This feature is not available' };
   };
 
   return { user, isLoading, error, updateUserProfile, updateUserPassword };
