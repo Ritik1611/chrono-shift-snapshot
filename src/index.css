@@ -5,97 +5,97 @@
 
 @layer base {
   :root {
-    --background: 255 255 255;
-    --foreground: 26 31 44;
+    --background: 220 47% 95%; /* Updated to a light blue-gray */
+    --foreground: 215 25% 27%;
 
-    --card: 255 255 255;
-    --card-foreground: 26 31 44;
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 27%;
 
-    --popover: 255 255 255;
-    --popover-foreground: 26 31 44;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 27%;
 
-    --primary: 110 89 165;
-    --primary-foreground: 255 255 255;
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 155 135 245;
-    --secondary-foreground: 255 255 255;
+    --secondary: 214 94% 68%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 241 240 251;
-    --muted-foreground: 110 89 165;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 214 188 250;
-    --accent-foreground: 26 31 44;
+    --accent: 217 91% 60%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 234 72 72;
-    --destructive-foreground: 255 255 255;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 214 188 250;
-    --input: 214 188 250;
-    --ring: 110 89 165;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 241 240 251;
-    --sidebar-foreground: 26 31 44;
-    --sidebar-primary: 110 89 165;
-    --sidebar-primary-foreground: 255 255 255;
-    --sidebar-accent: 214 188 250;
-    --sidebar-accent-foreground: 26 31 44;
-    --sidebar-border: 214 188 250;
-    --sidebar-ring: 110 89 165;
+    --sidebar-background: 210 40% 96.1%;
+    --sidebar-foreground: 215 25% 27%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 214 94% 68%;
+    --sidebar-accent-foreground: 215 25% 27%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 217 91% 60%;
 
-    /* Time travel specific variables - improved color scheme */
-    --chrono-primary: 110 89 165;
-    --chrono-secondary: 155 135 245;
-    --chrono-accent: 214 188 250;
-    --chrono-dark: 26 31 44;
-    --time-gradient: linear-gradient(90deg, #9b87f5 0%, #7E69AB 100%);
+    /* Time travel specific variables - Blue color scheme */
+    --chrono-primary: 217 91% 60%;
+    --chrono-secondary: 214 94% 68%;
+    --chrono-accent: 213 94% 85%;
+    --chrono-dark: 215 28% 17%;
+    --time-gradient: linear-gradient(90deg, #3B82F6 0%, #60A5FA 100%);
   }
 
   .dark {
-    --background: 26 31 44;
-    --foreground: 241 240 251;
+    --background: 220 20% 12%; /* Updated to a darker blue-gray */
+    --foreground: 210 40% 98%;
 
-    --card: 36 41 54;
-    --card-foreground: 241 240 251;
+    --card: 215 25% 27%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 36 41 54;
-    --popover-foreground: 241 240 251;
+    --popover: 215 25% 27%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 214 188 250;
-    --primary-foreground: 26 31 44;
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 155 135 245;
-    --secondary-foreground: 26 31 44;
+    --secondary: 214 94% 68%;
+    --secondary-foreground: 215 25% 27%;
 
-    --muted: 46 51 64;
-    --muted-foreground: 214 188 250;
+    --muted: 215 25% 27%;
+    --muted-foreground: 214 94% 68%;
 
-    --accent: 110 89 165;
-    --accent-foreground: 241 240 251;
+    --accent: 217 91% 60%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 234 72 72;
-    --destructive-foreground: 241 240 251;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 76 81 94;
-    --input: 76 81 94;
-    --ring: 214 188 250;
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 217 91% 60%;
 
-    --sidebar-background: 36 41 54;
-    --sidebar-foreground: 241 240 251;
-    --sidebar-primary: 155 135 245;
-    --sidebar-primary-foreground: 26 31 44;
-    --sidebar-accent: 110 89 165;
-    --sidebar-accent-foreground: 241 240 251;
-    --sidebar-border: 76 81 94;
-    --sidebar-ring: 214 188 250;
+    --sidebar-background: 215 25% 27%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 214 94% 68%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 215 25% 27%;
+    --sidebar-ring: 217 91% 60%;
 
     /* Time travel specific variables in dark mode */
-    --chrono-primary: 214 188 250;
-    --chrono-secondary: 155 135 245;
-    --chrono-accent: 110 89 165;
-    --chrono-dark: 36 41 54;
-    --time-gradient: linear-gradient(90deg, #9b87f5 0%, #6E59A5 100%);
+    --chrono-primary: 217 91% 60%;
+    --chrono-secondary: 214 94% 68%;
+    --chrono-accent: 213 94% 85%;
+    --chrono-dark: 215 25% 27%;
+    --time-gradient: linear-gradient(90deg, #3B82F6 0%, #60A5FA 100%);
   }
 }
 
@@ -177,7 +177,7 @@
     }
   }
   
-  /* Time travel animations - updated with white backgrounds */
+  /* Time travel animations - updated for blue theme */
   .time-warp {
     position: relative;
     overflow: hidden;
@@ -190,7 +190,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(155,135,245,0.2) 50%, rgba(255,255,255,0) 100%);
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(96,165,250,0.2) 50%, rgba(255,255,255,0) 100%);
     z-index: 1;
     transform: translateX(-100%);
     animation: time-warp 3s ease-in-out infinite;
@@ -246,7 +246,7 @@
     background: linear-gradient(
       to bottom right,
       rgba(255,255,255,0) 0%,
-      rgba(155,135,245,0.5) 50%,
+      rgba(96,165,250,0.5) 50%,
       rgba(255,255,255,0) 100%
     );
     transform: rotate(30deg);

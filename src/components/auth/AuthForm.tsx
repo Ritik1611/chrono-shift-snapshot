@@ -8,32 +8,112 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Clock, Lock, Mail, User } from "lucide-react";
+import { mongoService } from "@/services/mongoService";
 
 export default function AuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would call your backend API here
-    toast({
-      title: "Logged in successfully",
-      description: "Welcome back to Chrono!",
-    });
-    navigate("/dashboard");
+    setIsLoading(true);
+    
+    try {
+      // Authenticate user with MongoDB service
+      const userData = await mongoService.authenticateUser(email, password);
+      
+      if (userData) {
+        toast({
+          title: "Logged in successfully",
+          description: `Welcome back, ${userData.name}!`,
+        });
+        // Store username in sessionStorage for later use
+        sessionStorage.setItem("currentUser", userData.username);
+        navigate("/dashboard");
+      } else {
+        toast({
+          title: "Login failed",
+          description: "Invalid email or password",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Login error",
+        description: "An error occurred during login",
+        variant: "destructive"
+      });
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would call your backend API here
-    toast({
-      title: "Account created successfully",
-      description: "Welcome to Chrono!",
-    });
-    navigate("/dashboard");
+    setIsLoading(true);
+    
+    try {
+      if (!name || !email || !password) {
+        toast({
+          title: "Signup failed",
+          description: "All fields are required",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Check if user already exists
+      const existingUser = await mongoService.getUserByEmail(email);
+      
+      if (existingUser) {
+        toast({
+          title: "Signup failed",
+          description: "User with this email already exists",
+          variant: "destructive"
+        });
+      } else {
+        // Register new user
+        const username = email.split('@')[0] + "_" + Math.floor(Math.random() * 1000);
+        const newUser = await mongoService.createUser({
+          username,
+          email,
+          name,
+          password,
+          organization: ""
+        });
+        
+        if (newUser) {
+          toast({
+            title: "Account created successfully",
+            description: "Welcome to Chrono!",
+          });
+          // Store username in sessionStorage for later use
+          sessionStorage.setItem("currentUser", username);
+          navigate("/dashboard");
+        } else {
+          toast({
+            title: "Signup failed",
+            description: "Failed to create account",
+            variant: "destructive"
+          });
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Signup error",
+        description: "An error occurred during signup",
+        variant: "destructive"
+      });
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -91,8 +171,12 @@ export default function AuthForm() {
                 </div>
               </div>
               
-              <Button type="submit" className="w-full bg-chrono-primary hover:bg-chrono-secondary">
-                Login
+              <Button 
+                type="submit" 
+                className="w-full bg-chrono-primary hover:bg-chrono-secondary"
+                disabled={isLoading}
+              >
+                {isLoading ? "Logging in..." : "Login"}
               </Button>
             </form>
           </TabsContent>
@@ -146,8 +230,12 @@ export default function AuthForm() {
                 </div>
               </div>
               
-              <Button type="submit" className="w-full bg-chrono-primary hover:bg-chrono-secondary">
-                Create Account
+              <Button 
+                type="submit" 
+                className="w-full bg-chrono-primary hover:bg-chrono-secondary"
+                disabled={isLoading}
+              >
+                {isLoading ? "Creating account..." : "Create Account"}
               </Button>
             </form>
           </TabsContent>

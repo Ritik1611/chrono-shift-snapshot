@@ -1,38 +1,84 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { User, Mail, Building, Key } from "lucide-react";
+import { User, Mail, Building, Key, Loader2 } from "lucide-react";
+import { useMongoUser } from "@/hooks/useMongoUser";
 
 export default function Profile() {
-  const [name, setName] = useState("John Doe");
-  const [email, setEmail] = useState("john.doe@example.com");
-  const [organization, setOrganization] = useState("Acme Corp");
+  // We're using a mock username here - in a real app this would come from authentication
+  const { user, isLoading, error, updateUserProfile, updateUserPassword } = useMongoUser("john_doe");
+  
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [organization, setOrganization] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const { toast } = useToast();
 
-  const handleUpdateProfile = (e: React.FormEvent) => {
+  useEffect(() => {
+    // When user data is loaded, update form state
+    if (user) {
+      setName(user.name);
+      setEmail(user.email);
+      setOrganization(user.organization);
+    }
+  }, [user]);
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isLoading) return;
+    
+    const result = await updateUserProfile({
+      name,
+      email,
+      organization
+    });
+    
     toast({
-      title: "Profile updated",
-      description: "Your profile information has been updated.",
+      title: result.success ? "Profile updated" : "Update failed",
+      description: result.message,
+      variant: result.success ? "default" : "destructive"
     });
   };
 
-  const handleUpdatePassword = (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isLoading || !currentPassword || !newPassword) return;
+    
+    const result = await updateUserPassword(currentPassword, newPassword);
+    
     toast({
-      title: "Password updated",
-      description: "Your password has been changed successfully.",
+      title: result.success ? "Password updated" : "Update failed",
+      description: result.message,
+      variant: result.success ? "default" : "destructive"
     });
-    setCurrentPassword("");
-    setNewPassword("");
+    
+    if (result.success) {
+      setCurrentPassword("");
+      setNewPassword("");
+    }
   };
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="flex flex-col items-center justify-center h-full">
+          <h2 className="text-xl font-semibold text-red-500 mb-2">Error Loading Profile</h2>
+          <p>{error}</p>
+          <Button className="mt-4" onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -42,6 +88,12 @@ export default function Profile() {
           <p className="text-muted-foreground">
             Manage your account preferences
           </p>
+          {isLoading && !user && (
+            <div className="flex items-center gap-2 text-muted-foreground mt-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Loading user data...</span>
+            </div>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -62,6 +114,7 @@ export default function Profile() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="pl-10"
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -76,6 +129,7 @@ export default function Profile() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-10"
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -89,12 +143,24 @@ export default function Profile() {
                       value={organization}
                       onChange={(e) => setOrganization(e.target.value)}
                       className="pl-10"
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
 
-                <Button type="submit" className="bg-chrono-primary hover:bg-chrono-secondary">
-                  Update Profile
+                <Button 
+                  type="submit" 
+                  className="bg-chrono-primary hover:bg-chrono-secondary"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    "Update Profile"
+                  )}
                 </Button>
               </form>
             </CardContent>
@@ -118,6 +184,7 @@ export default function Profile() {
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       className="pl-10"
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -132,12 +199,24 @@ export default function Profile() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       className="pl-10"
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
 
-                <Button type="submit" className="bg-chrono-primary hover:bg-chrono-secondary">
-                  Update Password
+                <Button 
+                  type="submit" 
+                  className="bg-chrono-primary hover:bg-chrono-secondary"
+                  disabled={isLoading || !currentPassword || !newPassword}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    "Update Password"
+                  )}
                 </Button>
               </form>
             </CardContent>
@@ -153,10 +232,10 @@ export default function Profile() {
                 Performing these actions can result in data loss.
               </p>
               <div className="flex gap-4">
-                <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white">
+                <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white" disabled={isLoading}>
                   Delete All Snapshots
                 </Button>
-                <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white">
+                <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white" disabled={isLoading}>
                   Delete Account
                 </Button>
               </div>

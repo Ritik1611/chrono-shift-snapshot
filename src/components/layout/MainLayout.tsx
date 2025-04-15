@@ -1,5 +1,5 @@
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
@@ -18,8 +18,17 @@ interface MainLayoutProps {
 export default function MainLayout({ children }: MainLayoutProps) {
   const navigate = useNavigate();
   
+  useEffect(() => {
+    // Check if user is logged in
+    const currentUser = sessionStorage.getItem("currentUser");
+    if (!currentUser) {
+      navigate("/");
+    }
+  }, [navigate]);
+  
   const handleLogout = () => {
-    // In a real app, clear auth tokens here
+    // Clear user session
+    sessionStorage.removeItem("currentUser");
     navigate("/");
   };
   
@@ -29,10 +38,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-4 flex items-center gap-3">
-            <div className="relative h-8 w-8 rounded-full bg-chrono-primary flex items-center justify-center">
+            <div className="h-8 w-8 rounded-full bg-chrono-primary flex items-center justify-center">
               <Clock className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold time-gradient-text hidden md:inline-block">Chrono</span>
+            <span className="text-xl font-bold hidden md:inline-block">Chrono</span>
           </div>
           
           {/* Navigation */}

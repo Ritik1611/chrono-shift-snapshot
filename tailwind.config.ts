@@ -64,11 +64,11 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				chrono: {
-					primary: "#6E59A5",
-					secondary: "#9b87f5",
-					tertiary: "#D6BCFA",
-					dark: "#1A1F2C",
-					light: "#F1F0FB",
+					primary: "#3B82F6", // Changed from purple to modern blue
+					secondary: "#60A5FA", // Lighter blue tone
+					tertiary: "#93C5FD", // Even lighter blue for accents
+					dark: "#1E293B", // Slate dark for contrast
+					light: "#F1F5F9", // Light slate for backgrounds
 				}
 			},
 			borderRadius: {
@@ -131,7 +131,7 @@ export default {
 			},
 			backgroundImage: {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-				'time-gradient': 'linear-gradient(90deg, #6E59A5 0%, #9b87f5 50%, #D6BCFA 100%)'
+				'time-gradient': 'linear-gradient(90deg, #3B82F6 0%, #60A5FA 50%, #93C5FD 100%)' // Updated gradient
 			}
 		}
 	},
