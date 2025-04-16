@@ -276,7 +276,10 @@ export default function Timeline() {
                             )}
                           </CardTitle>
                           <span className="text-xs text-muted-foreground">
-                            {formatAxisDate(event.timestamp)}
+                            {(() => {
+                              const date = formatAxisDate(event.timestamp);
+                              return `${date.month} ${date.day}, ${date.time}`;
+                            })()}
                           </span>
                         </div>
                       </CardHeader>
