@@ -1,95 +1,95 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import MainLayout from "@/components/layout/MainLayout";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, CloudLightning, Database, Calendar, CheckCircle, AlertCircle } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
-
-// Mock data for snapshot history
-const snapshotHistory = [
-  { id: 1, timestamp: "2025-04-10T09:30:00", status: "successful", size: "2.4 GB" },
-  { id: 2, timestamp: "2025-04-09T14:15:00", status: "successful", size: "2.3 GB" },
-  { id: 3, timestamp: "2025-04-08T11:45:00", status: "successful", size: "2.3 GB" },
-  { id: 4, timestamp: "2025-04-07T16:20:00", status: "failed", size: "0 GB" },
-  { id: 5, timestamp: "2025-04-06T08:10:00", status: "successful", size: "2.2 GB" },
-];
+import { Clock, CloudLightning, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function Dashboard() {
-  const [storageUsed, setStorageUsed] = useState(68);
-  
-  // Format date in a time-focused way
-  const formatDate = (dateString: string) => {
+  const [snapshots, setSnapshots] = useState<any[]>([]);
+  const [currentVolumeId, setCurrentVolumeId] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+  // Safe formatDate function: if invalid or missing, return fallback string.
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    if (isNaN(date.getTime())) return "Invalid Date";
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(date);
   };
-  
+
+  // Fetch EBS Snapshots on mount
+  useEffect(() => {
+    const fetchSnapshots = async () => {
+      try {
+        const res = await axios.get("http://localhost:5001/chrono/view/ebs-snapshots", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        // Sort snapshots by updated_at descending (most recent first)
+        const sortedSnapshots = res.data.sort(
+          (a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        );
+        setSnapshots(sortedSnapshots);
+
+        // Use the most recent snapshot for Current Instance info.
+        if (sortedSnapshots.length > 0) {
+          setCurrentVolumeId(sortedSnapshots[0].volume_id);
+          setLastUpdated(formatDate(sortedSnapshots[0].updated_at));
+        }
+      } catch (error) {
+        console.error("Failed to fetch snapshots:", error);
+      }
+    };
+
+    fetchSnapshots();
+  }, []);
+
   return (
     <MainLayout>
       <div className="space-y-8 animate-fade-in">
+        {/* Header */}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
             Monitor your system snapshots and time-based changes
           </p>
         </div>
-        
+
         {/* Statistics Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+          {/* Total Snapshots Card */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Snapshots</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">24</div>
+              <div className="text-2xl font-bold">{snapshots.length}</div>
               <p className="text-xs text-muted-foreground">
-                +2 since last week
+                {snapshots.length > 5 ? `+${snapshots.length - 5} since last week` : ""}
               </p>
             </CardContent>
           </Card>
-          
+
+          {/* Current Instance Card */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Current Instance</CardTitle>
               <CloudLightning className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">EC2-i-87654</div>
-              <p className="text-xs text-muted-foreground">
-                Running for 14 days
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Storage Used</CardTitle>
-              <Database className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between mb-1">
-                <div className="text-2xl font-bold">{storageUsed}%</div>
-                <div className="text-sm text-muted-foreground">34/50 GB</div>
+              <div className="text-2xl font-bold">
+                {currentVolumeId ? currentVolumeId : "Loading..."}
               </div>
-              <Progress value={storageUsed} className="h-2" />
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Next Scheduled</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">Today</div>
               <p className="text-xs text-muted-foreground">
-                23:00 UTC
+                Last updated {lastUpdated || "Loading..."}
               </p>
             </CardContent>
           </Card>
@@ -99,8 +99,8 @@ export default function Dashboard() {
         <div>
           <h2 className="text-xl font-semibold mb-4">Recent Snapshots</h2>
           <div className="space-y-4">
-            {snapshotHistory.map((snapshot) => (
-              <Card key={snapshot.id} className="hover:shadow-md transition-all">
+            {snapshots.map((snapshot: any, index: number) => (
+              <Card key={snapshot._id || index} className="hover:shadow-md transition-all">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     {snapshot.status === "successful" ? (
@@ -109,14 +109,16 @@ export default function Dashboard() {
                       <AlertCircle className="h-5 w-5 text-red-500" />
                     )}
                     <div>
-                      <p className="font-medium">Snapshot #{snapshot.id}</p>
-                      <p className="text-sm text-muted-foreground">{formatDate(snapshot.timestamp)}</p>
+                      <p className="font-medium">Snapshot #{index + 1}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatDate(snapshot.updated_at)}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-sm text-muted-foreground">{snapshot.size}</span>
-                    <Button 
-                      size="sm" 
+                    <span className="text-sm text-muted-foreground">{snapshot.size || "N/A"}</span>
+                    <Button
+                      size="sm"
                       variant="outline"
                       className="text-chrono-secondary border-chrono-secondary hover:bg-chrono-secondary hover:text-white"
                     >
@@ -128,13 +130,13 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
-        
-        {/* Actions */}
+
+        {/* Actions (only Compare Versions remains for read-only dashboard) */}
         <div className="flex flex-col md:flex-row gap-4">
-          <Button className="bg-chrono-primary hover:bg-chrono-secondary">
-            Create New Snapshot
-          </Button>
-          <Button variant="outline" className="border-chrono-secondary text-chrono-secondary hover:bg-chrono-secondary hover:text-white">
+          <Button
+            variant="outline"
+            className="border-chrono-secondary text-chrono-secondary hover:bg-chrono-secondary hover:text-white"
+          >
             Compare Versions
           </Button>
         </div>

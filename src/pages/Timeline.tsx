@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,7 +34,7 @@ export default function Timeline() {
     }
   }, [isAuthenticated, navigate]);
 
-  // Fetch timeline data from API
+  // Fetch timeline data from updated API
   const { data: timelines, isLoading: timelinesLoading } = useQuery({
     queryKey: ['timelines'],
     queryFn: apiService.getTimelines,
@@ -70,9 +69,11 @@ export default function Timeline() {
     enabled: isAuthenticated
   });
 
-  // Format date in a time-focused way
-  const formatDate = (dateString: string) => {
+  // Safe date formatting: returns "N/A" if missing, "Invalid Date" if date is invalid.
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid Date";
     return new Intl.DateTimeFormat('en-US', { 
       month: 'short', 
       day: 'numeric',
@@ -107,7 +108,8 @@ export default function Timeline() {
           id: `snapshot-${index}`,
           type: "snapshot",
           status: snapshot.status || "successful",
-          timestamp: snapshot.timestamp || snapshot.created_at,
+          // Use updated_at (fallback to timestamp or created_at if needed)
+          timestamp: snapshot.updated_at || snapshot.timestamp || snapshot.created_at,
           message: snapshot.description || "Instance snapshot created",
           details: snapshot.snapshot_id || `Snapshot ${index + 1}`
         });
@@ -142,10 +144,12 @@ export default function Timeline() {
       });
     }
     
-    // Sort by timestamp, newest first
-    return events.sort((a, b) => 
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
+    // Sort by timestamp (newest first) using safe conversion
+    return events.sort((a, b) => {
+      const timeA = new Date(a.timestamp || "").getTime() || 0;
+      const timeB = new Date(b.timestamp || "").getTime() || 0;
+      return timeB - timeA;
+    });
   };
 
   const timelineEvents = constructTimelineEvents();
