@@ -3,7 +3,7 @@ import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Calendar, CheckCircle, Clock, CloudLightning, FileText, History, XCircle, Hourglass, Sparkles } from "lucide-react";
+import { Calendar, CheckCircle, Clock, CloudLightning, FileText, History, XCircle, Hourglass } from "lucide-react";
 import { TimeAxis } from "@/components/timeline/TimeAxis";
 import { CapsuleList } from "@/components/timeline/CapsuleList";
 import { FileVersions } from "@/components/timeline/FileVersions";
@@ -13,16 +13,15 @@ import { useQuery } from "@tanstack/react-query";
 import apiService from "@/services/apiService";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { formatAxisDate } from "@/components/timeline/formatAxisDate";
 
 export default function Timeline() {
-  // Local state for filter and selected time point
   const [filter, setFilter] = useState("all");
   const [selectedTimePoint, setSelectedTimePoint] = useState("");
   const [activeTab, setActiveTab] = useState("events");
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  // Check authentication—if not logged in, redirect and display a toast
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/');
@@ -34,56 +33,36 @@ export default function Timeline() {
     }
   }, [isAuthenticated, navigate]);
 
-  // Fetch timeline data from updated API
   const { data: timelines, isLoading: timelinesLoading } = useQuery({
     queryKey: ['timelines'],
     queryFn: apiService.getTimelines,
     enabled: isAuthenticated
   });
 
-  // Fetch capsule data
   const { data: capsules, isLoading: capsulesLoading } = useQuery({
     queryKey: ['capsules'],
     queryFn: apiService.getCapsules,
     enabled: isAuthenticated
   });
 
-  // Fetch file versions data
   const { data: fileVersions, isLoading: fileVersionsLoading } = useQuery({
     queryKey: ['fileVersions'],
     queryFn: apiService.getFileVersions,
     enabled: isAuthenticated
   });
 
-  // Fetch snapshots data
   const { data: snapshots, isLoading: snapshotsLoading } = useQuery({
     queryKey: ['snapshots'],
     queryFn: apiService.getSnapshots,
     enabled: isAuthenticated
   });
 
-  // Fetch EC2 instances data
   const { data: ec2Instances, isLoading: ec2InstancesLoading } = useQuery({
     queryKey: ['ec2Instances'],
     queryFn: apiService.getEC2Instances,
     enabled: isAuthenticated
   });
 
-  // Safe date formatting: returns "N/A" if missing, "Invalid Date" if date is invalid.
-  const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "Invalid Date";
-    return new Intl.DateTimeFormat('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      weekday: 'short',
-      hour: '2-digit', 
-      minute: '2-digit' 
-    }).format(date);
-  };
-
-  // Get icon based on event type
   const getEventIcon = (type: string) => {
     switch (type) {
       case "snapshot":
@@ -97,26 +76,22 @@ export default function Timeline() {
     }
   };
 
-  // Transform the API data into a unified events array
   const constructTimelineEvents = () => {
     let events: any[] = [];
-    
-    // Add snapshots
+
     if (snapshots) {
       snapshots.forEach((snapshot: any, index: number) => {
         events.push({
           id: `snapshot-${index}`,
           type: "snapshot",
           status: snapshot.status || "successful",
-          // Use updated_at (fallback to timestamp or created_at if needed)
           timestamp: snapshot.updated_at || snapshot.timestamp || snapshot.created_at,
           message: snapshot.description || "Instance snapshot created",
           details: snapshot.snapshot_id || `Snapshot ${index + 1}`
         });
       });
     }
-    
-    // Add EC2 instance events
+
     if (ec2Instances) {
       ec2Instances.forEach((instance: any, index: number) => {
         events.push({
@@ -129,8 +104,7 @@ export default function Timeline() {
         });
       });
     }
-    
-    // Add timeline entries
+
     if (timelines) {
       timelines.forEach((timeline: any, index: number) => {
         events.push({
@@ -143,8 +117,7 @@ export default function Timeline() {
         });
       });
     }
-    
-    // Sort by timestamp (newest first) using safe conversion
+
     return events.sort((a, b) => {
       const timeA = new Date(a.timestamp || "").getTime() || 0;
       const timeB = new Date(b.timestamp || "").getTime() || 0;
@@ -158,23 +131,20 @@ export default function Timeline() {
     setSelectedTimePoint(timePoint);
     toast({
       title: "Time point selected",
-      description: `You've selected time point: ${formatDate(timePoint)}`,
+      description: `You've selected time point: ${formatAxisDate(timePoint)}`,
     });
   };
 
-  // Filter events based on selected type filter
   const filteredEvents = filter === "all" 
     ? timelineEvents 
     : timelineEvents.filter(event => event.type === filter);
 
   useEffect(() => {
-    // Set the first event's timestamp as default selected time point (if not already set)
     if (timelineEvents.length > 0 && !selectedTimePoint) {
       setSelectedTimePoint(timelineEvents[0].timestamp);
     }
   }, [timelineEvents, selectedTimePoint]);
 
-  // Check if any data is still loading
   const isLoading = timelinesLoading || capsulesLoading || fileVersionsLoading || 
                     snapshotsLoading || ec2InstancesLoading;
 
@@ -194,7 +164,6 @@ export default function Timeline() {
   return (
     <MainLayout>
       <div className="space-y-8 animate-fade-in">
-        {/* Header with time travel theme */}
         <div className="relative z-10 mb-8">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 rounded-lg -z-10 blur-xl"></div>
           <div className="absolute -top-12 -left-12 w-32 h-32 bg-primary/20 rounded-full blur-xl opacity-60 time-pulse"></div>
@@ -244,8 +213,7 @@ export default function Timeline() {
             </div>
           </div>
         </div>
-        
-        {/* Time Axis Visualization */}
+
         {timelineEvents.length > 0 ? (
           <TimeAxis 
             events={timelineEvents}
@@ -257,8 +225,7 @@ export default function Timeline() {
             <p className="text-muted-foreground">No timeline events available.</p>
           </Card>
         )}
-        
-        {/* Main Content Tabs */}
+
         <Tabs defaultValue="events" value={activeTab} onValueChange={setActiveTab}>
           <div className="flex items-center justify-between">
             <TabsList className="grid grid-cols-3 w-[400px]">
@@ -268,7 +235,6 @@ export default function Timeline() {
             </TabsList>
           </div>
 
-          {/* Events Tab */}
           <TabsContent value="events" className="mt-6 relative space-y-6">
             <div className="flex items-center justify-between">
               <TabsList>
@@ -278,9 +244,9 @@ export default function Timeline() {
                 <TabsTrigger value="config" onClick={() => setFilter("config")}>Configurations</TabsTrigger>
               </TabsList>
             </div>
-            
+
             <div className="timeline-connector -z-10"></div>
-            
+
             {filteredEvents.length > 0 ? (
               <div className="space-y-8">
                 {filteredEvents.map((event, idx) => (
@@ -309,7 +275,7 @@ export default function Timeline() {
                             )}
                           </CardTitle>
                           <span className="text-xs text-muted-foreground">
-                            {formatDate(event.timestamp)}
+                            {formatAxisDate(event.timestamp)}
                           </span>
                         </div>
                       </CardHeader>
@@ -326,8 +292,7 @@ export default function Timeline() {
               </div>
             )}
           </TabsContent>
-          
-          {/* Capsules Tab */}
+
           <TabsContent value="capsules" className="mt-6">
             {capsules && capsules.length > 0 ? (
               <CapsuleList 
@@ -341,8 +306,7 @@ export default function Timeline() {
               </Card>
             )}
           </TabsContent>
-          
-          {/* Files Tab */}
+
           <TabsContent value="files" className="mt-6">
             {fileVersions && fileVersions.length > 0 ? (
               <FileVersions 
