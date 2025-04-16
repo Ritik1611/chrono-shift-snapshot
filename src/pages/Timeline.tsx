@@ -129,9 +129,10 @@ export default function Timeline() {
 
   const handleTimePointSelect = (timePoint: string) => {
     setSelectedTimePoint(timePoint);
+    const formattedDate = formatAxisDate(timePoint);
     toast({
       title: "Time point selected",
-      description: `You've selected time point: ${formatAxisDate(timePoint)}`,
+      description: `You've selected time point: ${formattedDate.month} ${formattedDate.day}, ${formattedDate.time}`,
     });
   };
 

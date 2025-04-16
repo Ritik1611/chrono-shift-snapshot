@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { formatAxisDate } from "./formatAxisDate";
 
 interface TimeEvent {
   id: string | number;
@@ -26,16 +27,6 @@ export function TimeAxis({ events, selectedTimePoint, onSelectTimePoint }: TimeA
   const sortedEvents = [...events].sort((a, b) => 
     new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
-  
-  // Format date for display on the axis
-  const formatAxisDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return {
-      day: new Intl.DateTimeFormat('en-US', { day: '2-digit' }).format(date),
-      month: new Intl.DateTimeFormat('en-US', { month: 'short' }).format(date),
-      time: new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit' }).format(date)
-    };
-  };
   
   // Check if an event is selected
   const isSelected = (timestamp: string) => selectedTimePoint === timestamp;
