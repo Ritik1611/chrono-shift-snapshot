@@ -1,6 +1,6 @@
 
 import AuthForm from "@/components/auth/AuthForm";
-import { Clock, Hourglass, Sparkles } from "lucide-react";
+import { Clock, Download, Hourglass, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,6 +16,15 @@ const Index = () => {
       navigate("/dashboard");
     }
   }, [isAuthenticated, navigate]);
+
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = '/assets/chrono_installer.exe';
+    link.download = 'chrono_installer.exe';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
   
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
@@ -89,11 +98,12 @@ const Index = () => {
           
           <div className="mt-8">
             <Button 
-              onClick={() => navigate("/dashboard")} 
+              onClick={handleDownload}
               size="lg" 
               className="bg-white text-chrono-primary hover:bg-white/90"
             >
-              Explore Dashboard
+              <Download className="mr-2 h-4 w-4" />
+              Install Chrono CLI
             </Button>
           </div>
         </div>
